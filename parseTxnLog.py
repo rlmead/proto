@@ -1,4 +1,5 @@
 import sys
+import struct
 
 # define path to txnlog file
 txnLogFile = './txnlog.dat'
@@ -17,15 +18,15 @@ userBalance = 0.0
 with open(txnLogFile, 'rb') as file:
     # read the first 9 bytes - these will be the header if the txnLogFile is the proper format
     header = file.read(9)
+    magicString, version, numRecords = struct.unpack('! 4s c I', header)
     # validate magic string "MPS7" in header
-    if header[:4] != b'MPS7':
+    if magicString != b'MPS7':
         sys.exit("ERROR: ./txnlog.dat is not the correct format.")
     # define a couple variables for cycling through the transaction records
     currentRecord = file.read(1)
     count = 0
     # cycle through transaction records
     while currentRecord:
-        count += 1
         # cycle through transaction records (note: this code is a bit wet/repetitive, but i think abstracting it with extra functions would be overengineering for this relatively simple task)
         if currentRecord == b'\x00':
             # read the remaining bytes in the record
@@ -62,4 +63,3 @@ print("total debit amount="+str('{:.2f}'.format(round(totalDebit,2))))
 print("autopays started="+str(autopaysStarted))
 print("autopays ended="+str(autopaysEnded))
 print("balance for user 2456938384156277127="+str('{:.2f}'.format(round(userBalance,2))))
-print("transaction count="+str(count))
