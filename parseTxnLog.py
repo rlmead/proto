@@ -5,7 +5,7 @@ import struct
 txnLogFile = './txnlog.dat'
 
 # define user whose balance should be returned
-user = '2456938384156277127'
+user = 2456938384156277127
 
 # define variables that will be returned
 totalDebit = 0.0
@@ -33,19 +33,21 @@ with open(txnLogFile, 'rb') as file:
             record = file.read(20)
             # parse the data from the record
             unixTimestamp, userId, dollarAmount = struct.unpack('! I Q d', record)
-            print('debit: '+str(userId))
             # add record's amount in dollars to totalDebit
-            # if record's user ID matches user:
-                # subtract record's amount in dollars from userBalance
+            totalDebit += dollarAmount
+            # if record's user ID matches user, subtract record's amount in dollars from userBalance
+            if userId == user:
+                userBalance -= dollarAmount
         elif currentRecord == b'\x01':
             # read the remaining bytes in the record
             record = file.read(20)
             # parse the data from the record
             unixTimestamp, userId, dollarAmount = struct.unpack('! I Q d', record)
-            print('credit: '+str(userId))
             # add record's amount in dollars to totalCredit
-            # if record's user ID matches user:
-                # add record's amount in dollars to userBalance
+            totalCredit += dollarAmount
+            # if record's user ID matches user, add record's amount in dollars to userBalance
+            if userId == user:
+                userBalance -= dollarAmount
         elif currentRecord == b'\x02':
             # increment the count of autopays started
             autopaysStarted += 1
@@ -53,7 +55,6 @@ with open(txnLogFile, 'rb') as file:
             record = file.read(12)
             # parse the data from the record
             unixTimestamp, userId = struct.unpack('! I Q', record)
-            print('start autopay: '+str(userId))
         elif currentRecord == b'\x03':
             # increment the count of autopays ended
             autopaysEnded += 1
@@ -61,7 +62,6 @@ with open(txnLogFile, 'rb') as file:
             record = file.read(12)
             # parse the data from the record
             unixTimestamp, userId = struct.unpack('! I Q', record)
-            print('end autopay: '+str(userId))
         # move on to the next record
         currentRecord = file.read(1)
 
@@ -72,4 +72,4 @@ print("total credit amount="+str('{:.2f}'.format(round(totalCredit,2))))
 print("total debit amount="+str('{:.2f}'.format(round(totalDebit,2))))
 print("autopays started="+str(autopaysStarted))
 print("autopays ended="+str(autopaysEnded))
-print("balance for user 2456938384156277127="+str('{:.2f}'.format(round(userBalance,2))))
+print("balance for user "+str(user)+"="+str('{:.2f}'.format(round(userBalance,2))))
