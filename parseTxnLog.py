@@ -27,18 +27,22 @@ with open(txnLogFile, 'rb') as file:
     count = 0
     # cycle through transaction records
     while currentRecord:
-        # cycle through transaction records (note: this code is a bit wet/repetitive, but i think abstracting it with extra functions would be overengineering for this relatively simple task)
+        # cycle through transaction records (note: this code is a bit wet/repetitive - wondering whether abstracting it with extra functions would be overengineering for this relatively simple task)
         if currentRecord == b'\x00':
             # read the remaining bytes in the record
             record = file.read(20)
-            # parse record's user ID and amount in dollars
+            # parse the data from the record
+            unixTimestamp, userId, dollarAmount = struct.unpack('! I Q d', record)
+            print('debit: '+str(userId))
             # add record's amount in dollars to totalDebit
             # if record's user ID matches user:
                 # subtract record's amount in dollars from userBalance
         elif currentRecord == b'\x01':
             # read the remaining bytes in the record
             record = file.read(20)
-            # parse record's user ID and amount in dollars
+            # parse the data from the record
+            unixTimestamp, userId, dollarAmount = struct.unpack('! I Q d', record)
+            print('credit: '+str(userId))
             # add record's amount in dollars to totalCredit
             # if record's user ID matches user:
                 # add record's amount in dollars to userBalance
@@ -47,11 +51,17 @@ with open(txnLogFile, 'rb') as file:
             autopaysStarted += 1
             # read the remaining bytes in the record
             record = file.read(12)
+            # parse the data from the record
+            unixTimestamp, userId = struct.unpack('! I Q', record)
+            print('start autopay: '+str(userId))
         elif currentRecord == b'\x03':
             # increment the count of autopays ended
             autopaysEnded += 1
             # read the remaining bytes in the record
             record = file.read(12)
+            # parse the data from the record
+            unixTimestamp, userId = struct.unpack('! I Q', record)
+            print('end autopay: '+str(userId))
         # move on to the next record
         currentRecord = file.read(1)
 
