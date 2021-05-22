@@ -5,8 +5,8 @@ txnLogFile = './txnlog.dat'
 
 user = 2456938384156277127
 
-totalDebit = 0.0
 totalCredit = 0.0
+totalDebit = 0.0
 autopaysStarted = 0
 autopaysEnded = 0
 userBalance = 0.0
@@ -47,7 +47,6 @@ def main():
                 handleTransaction(currentRecord, struct.unpack('! I Q', file.read(12)))
                 numRecordsRead += 1
             nextRecord = file.read(1)
-
     file.close()
 
     print("total credit amount="+str('{:.2f}'.format(round(totalCredit,2))))
