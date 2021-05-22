@@ -1,6 +1,7 @@
 import sys
 import struct
 
+# Define global variables
 txnLogFile = './txnlog.dat'
 
 user = 2456938384156277127
@@ -11,6 +12,7 @@ autopaysStarted = 0
 autopaysEnded = 0
 userBalance = 0.0
 
+# Define function to use transaction data
 def handleTransaction(recordType,parsedData):
     global totalDebit
     global totalCredit
@@ -18,22 +20,25 @@ def handleTransaction(recordType,parsedData):
     global autopaysEnded
     global userBalance
     if recordType == 0:
-        totalDebit += parsedData[2]
-        if parsedData[1] == user:
-            userBalance -= parsedData[2]
+        userId, dollarAmount = parsedData[1], parsedData[2]
+        totalDebit += dollarAmount
+        if userId == user:
+            userBalance -= dollarAmount
     elif recordType == 1:
-        totalCredit += parsedData[2]
-        if parsedData[1] == user:
-            userBalance += parsedData[2]
+        userId, dollarAmount = parsedData[1], parsedData[2]
+        totalCredit += dollarAmount
+        if userId == user:
+            userBalance += dollarAmount
     elif recordType == 2:
         autopaysStarted += 1
     elif recordType == 3:
         autopaysEnded += 1
 
+# Define main function to parse transaction log file
 def main():
     with open(txnLogFile, 'rb') as file:
-        header = file.read(9)
-        magicString, version, numRecordsTotal = struct.unpack('! 4s c I', header)
+        header = struct.unpack('! 4s c I', file.read(9))
+        magicString, numRecordsTotal = header[0], header[2]
         if magicString != b'MPS7':
             sys.exit("ERROR: ./txnlog.dat is not the correct format.")
         nextRecord = file.read(1)
@@ -49,6 +54,7 @@ def main():
             nextRecord = file.read(1)
     file.close()
 
+    # Return required data
     print("total credit amount="+str('{:.2f}'.format(round(totalCredit,2))))
     print("total debit amount="+str('{:.2f}'.format(round(totalDebit,2))))
     print("autopays started="+str(autopaysStarted))
