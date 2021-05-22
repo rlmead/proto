@@ -66,7 +66,7 @@ def main():
         # cycle through transaction records
         nextRecord = file.read(1)
         numRecordsRead = 0
-        while nextRecord:
+        while nextRecord and numRecordsRead < numRecordsTotal:
             currentRecord = str(struct.unpack('B', nextRecord)[0])
             if currentRecord in recordTypes:
                 currentRecordType = recordTypes[currentRecord]
