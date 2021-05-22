@@ -7,20 +7,52 @@ txnLogFile = './txnlog.dat'
 # define user whose balance should be returned
 user = 2456938384156277127
 
-def main():
-    # define variables that will be returned
-    totalDebit = 0.0
-    totalCredit = 0.0
-    autopaysStarted = 0
-    autopaysEnded = 0
-    userBalance = 0.0
+# define variables that will be returned
+totalDebit = 0.0
+totalCredit = 0.0
+autopaysStarted = 0
+autopaysEnded = 0
+userBalance = 0.0
 
-    # parse binary file txnLogFile
+# function to handle transaction data
+def handleTransaction(recordType,parsedData):
+    global user
+    global totalDebit
+    global totalCredit
+    global autopaysStarted
+    global autopaysEnded
+    global userBalance
+    if recordType == b'\x00':
+        # get and use the data from the record
+        unixTimestamp, userId, dollarAmount = parsedData
+        totalDebit += dollarAmount
+        if userId == user:
+            userBalance -= dollarAmount
+    elif recordType == b'\x01':
+        # get and use the data from the record
+        unixTimestamp, userId, dollarAmount = parsedData
+        totalCredit += dollarAmount
+        if userId == user:
+            userBalance -= dollarAmount
+    elif recordType == b'\x02':
+        # get the data from the record (currently unused)
+        unixTimestamp, userId = parsedData
+        # increment the count of autopays started
+        autopaysStarted += 1
+    elif recordType == b'\x03':
+        # get the data from the record (currently unused)
+        unixTimestamp, userId = parsedData
+        # increment the count of autopays ended
+        autopaysEnded += 1
+
+# main function to parse transaction log
+def main():
+    # read binary file
     with open(txnLogFile, 'rb') as file:
-        # read the first 9 bytes - these will be the header if the txnLogFile is the proper format
+        # check for properly-formatted header
         header = file.read(9)
         magicString, version, numRecords = struct.unpack('! 4s c I', header)
-        # validate magic string "MPS7" in header
+        # validate that first 4 bytes in header are "MPS7"
         if magicString != b'MPS7':
             sys.exit("ERROR: ./txnlog.dat is not the correct format.")
         # define a couple variables for cycling through the transaction records
@@ -28,42 +60,12 @@ def main():
         count = 0
         # cycle through transaction records
         while currentRecord:
-            # cycle through transaction records (note: this code is a bit wet/repetitive - wondering whether abstracting it with extra functions would be overengineering for this relatively simple task)
-            if currentRecord == b'\x00':
-                # read the remaining bytes in the record
-                record = file.read(20)
-                # parse the data from the record
-                unixTimestamp, userId, dollarAmount = struct.unpack('! I Q d', record)
-                # add record's amount in dollars to totalDebit
-                totalDebit += dollarAmount
-                # if record's user ID matches user, subtract record's amount in dollars from userBalance
-                if userId == user:
-                    userBalance -= dollarAmount
-            elif currentRecord == b'\x01':
-                # read the remaining bytes in the record
-                record = file.read(20)
-                # parse the data from the record
-                unixTimestamp, userId, dollarAmount = struct.unpack('! I Q d', record)
-                # add record's amount in dollars to totalCredit
-                totalCredit += dollarAmount
-                # if record's user ID matches user, add record's amount in dollars to userBalance
-                if userId == user:
-                    userBalance -= dollarAmount
-            elif currentRecord == b'\x02':
-                # increment the count of autopays started
-                autopaysStarted += 1
-                # read the remaining bytes in the record
-                record = file.read(12)
-                # parse the data from the record
-                unixTimestamp, userId = struct.unpack('! I Q', record)
-            elif currentRecord == b'\x03':
-                # increment the count of autopays ended
-                autopaysEnded += 1
-                # read the remaining bytes in the record
-                record = file.read(12)
-                # parse the data from the record
-                unixTimestamp, userId = struct.unpack('! I Q', record)
-            # move on to the next record
+            if currentRecord in [b'\x00', b'\x01']:
+                # parse the 20 remaining bytes in debit/credit records
+                handleTransaction(currentRecord, struct.unpack('! I Q d', file.read(20)))
+            elif currentRecord in [b'\x02', b'\x03']:
+                # parse the 12 remaining bytes in autopay start/end records
+                handleTransaction(currentRecord, struct.unpack('! I Q', file.read(12)))
             currentRecord = file.read(1)
 
     file.close()
