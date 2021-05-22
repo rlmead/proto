@@ -19,19 +19,19 @@ def handleTransaction(recordType,parsedData,user):
     global autopaysStarted
     global autopaysEnded
     global userBalance
-    if recordType == 0:
+    if recordType == 0: # debit
         userId, dollarAmount = parsedData[1], parsedData[2]
         totalDebit += dollarAmount
         if userId == user:
             userBalance -= dollarAmount
-    elif recordType == 1:
+    elif recordType == 1: # credit
         userId, dollarAmount = parsedData[1], parsedData[2]
         totalCredit += dollarAmount
         if userId == user:
             userBalance += dollarAmount
-    elif recordType == 2:
+    elif recordType == 2: # start autopay
         autopaysStarted += 1
-    elif recordType == 3:
+    elif recordType == 3: # end autopay
         autopaysEnded += 1
 
 # Define main function to parse log file
@@ -45,10 +45,10 @@ def main(logFile,userId):
         numRecordsRead = 0
         while nextRecord and numRecordsRead < numRecordsTotal:
             currentRecord = struct.unpack('B', nextRecord)[0]
-            if currentRecord in [0, 1]:
+            if currentRecord in [0, 1]: # handle debit & credit records
                 handleTransaction(currentRecord, struct.unpack('! I Q d', file.read(20)), userId)
                 numRecordsRead += 1
-            elif currentRecord in [2, 3]:
+            elif currentRecord in [2, 3]: # handle start autopay & end autopay records
                 handleTransaction(currentRecord, struct.unpack('! I Q', file.read(12)), userId)
                 numRecordsRead += 1
             nextRecord = file.read(1)
