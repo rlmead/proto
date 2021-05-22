@@ -7,13 +7,6 @@ txnLogFile = './txnlog.dat'
 # define user whose balance should be returned
 user = 2456938384156277127
 
-# define variables to track data that will be returned
-totalDebit = 0.0
-totalCredit = 0.0
-autopaysStarted = 0
-autopaysEnded = 0
-userBalance = 0.0
-
 # map record enumerations to human-readable names
 recordTypes = {
     '0': 'debit',
@@ -22,9 +15,15 @@ recordTypes = {
     '3': 'endAutopay'
 }
 
+# define variables to track data that will be returned
+totalDebit = 0.0
+totalCredit = 0.0
+autopaysStarted = 0
+autopaysEnded = 0
+userBalance = 0.0
+
 # define function to handle transaction data
 def handleTransaction(recordType,parsedData):
-    global user
     global totalDebit
     global totalCredit
     global autopaysStarted
@@ -88,5 +87,6 @@ def main():
     print("autopays ended="+str(autopaysEnded))
     print("balance for user "+str(user)+"="+str('{:.2f}'.format(round(userBalance,2))))
 
+# run main function
 if __name__ == "__main__":
     main()
