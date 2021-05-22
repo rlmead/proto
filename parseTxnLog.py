@@ -52,13 +52,13 @@ def main():
     with open(txnLogFile, 'rb') as file:
         # check for properly-formatted header
         header = file.read(9)
-        magicString, version, numRecordsRead = struct.unpack('! 4s c I', header)
+        magicString, version, numRecordsTotal = struct.unpack('! 4s c I', header)
         # validate that first 4 bytes in header are "MPS7"
         if magicString != b'MPS7':
             sys.exit("ERROR: ./txnlog.dat is not the correct format.")
         # define a couple variables for cycling through the transaction records
         currentRecord = file.read(1)
-        numRecordsTotal = 0
+        numRecordsRead = 0
         # cycle through transaction records
         while currentRecord:
             if currentRecord in [b'\x00', b'\x01']:
