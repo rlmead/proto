@@ -1,19 +1,9 @@
 import sys
 import struct
 
-# define path to txnlog file
 txnLogFile = './txnlog.dat'
 
-# define user whose balance should be returned
 user = 2456938384156277127
-
-# map record enumerations to human-readable names
-recordTypes = {
-    '0': 'debit',
-    '1': 'credit',
-    '2': 'startAutopay',
-    '3': 'endAutopay'
-}
 
 # define variables to track data that will be returned
 totalDebit = 0.0
@@ -29,24 +19,24 @@ def handleTransaction(recordType,parsedData):
     global autopaysStarted
     global autopaysEnded
     global userBalance
-    if recordType == 'debit':
+    if recordType == 0:
         # get and use the data from the record
         unixTimestamp, userId, dollarAmount = parsedData
         totalDebit += dollarAmount
         if userId == user:
             userBalance -= dollarAmount
-    elif recordType == 'credit':
+    elif recordType == 1:
         # get and use the data from the record
         unixTimestamp, userId, dollarAmount = parsedData
         totalCredit += dollarAmount
         if userId == user:
             userBalance -= dollarAmount
-    elif recordType == 'startAutopay':
+    elif recordType == 2:
         # get the data from the record (currently unused)
         unixTimestamp, userId = parsedData
         # increment the count of autopays started
         autopaysStarted += 1
-    elif recordType == 'endAutopay':
+    elif recordType == 3:
         # get the data from the record (currently unused)
         unixTimestamp, userId = parsedData
         # increment the count of autopays ended
@@ -66,15 +56,14 @@ def main():
         nextRecord = file.read(1)
         numRecordsRead = 0
         while nextRecord and numRecordsRead < numRecordsTotal:
-            currentRecord = str(struct.unpack('B', nextRecord)[0])
-            if currentRecord in recordTypes:
-                currentRecordType = recordTypes[currentRecord]
-                if currentRecordType in ['debit', 'credit']:
-                    # parse the 20 remaining bytes in debit/credit records
-                    handleTransaction(currentRecordType, struct.unpack('! I Q d', file.read(20)))
-                elif currentRecordType in ['startAutopay', 'endAutopay']:
-                    # parse the 12 remaining bytes in autopay start/end records
-                    handleTransaction(currentRecordType, struct.unpack('! I Q', file.read(12)))
+            currentRecord = struct.unpack('B', nextRecord)[0]
+            if currentRecord in [0, 1]:
+                # parse the 20 remaining bytes in debit/credit records
+                handleTransaction(currentRecord, struct.unpack('! I Q d', file.read(20)))
+                numRecordsRead += 1
+            elif currentRecord in [2, 3]:
+                # parse the 12 remaining bytes in autopay start/end records
+                handleTransaction(currentRecord, struct.unpack('! I Q', file.read(12)))
                 numRecordsRead += 1
             nextRecord = file.read(1)
 
