@@ -14,10 +14,12 @@ balance for user 2456938384156277127=0.00
 ```
 
 ## Should have
-- graceful error handling for incorrectly-formatted transaction logs
+- graceful error handling for transaction logs that don't have the magic string in the header
+- simple, clean design that will be straightforward to reviewers
+- efficient code
 
 ## Could have
-- object-oriented transaction handling
 
 ## Won't have
 - input argument handling
+- extensive error checks
